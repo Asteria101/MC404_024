@@ -7,11 +7,15 @@
 * Function to calculate the power of a number
 */
 double power(int base, int exp) {
-    double result = 1;
-    if (exp == 0) return 1;
-
-    for (int i = 0; i < exp; i++)
-        result *= base;
+    double result = 1, current_power = base;
+    
+    while (exp > 0) {
+        if (exp & 1)
+            result *= current_power;
+        
+        current_power *= current_power;
+        exp >>= 1;
+    }
 
     return result;
 }
@@ -38,23 +42,48 @@ unsigned stringToInteger(char input[], int strLength, int base) {
 
 
 /*
-* Function that reverse the elements of a string
+* Function that reverse the elements of a string - unused
 */
-void reverseArray(char array[], int size) {
+/*void reverseArray(char array[], int size) {
     for (int i = 0; i < size / 2; i++) {
         char temp = array[i];
         array[i] = array[size - i - 1];
         array[size - i - 1] = temp;
     }
+}*/
+
+
+/*
+* Function to copy a string to another string
+*/
+void copyString(int src[], int dest[], int end_src, int end_dest) {
+    for (int i = 0, j = end_dest; i <= end_src, j >= end_dest - end_src; i++, j--)
+        dest[j] = src[i];
+
+    dest[32] = '\0';
 }
+
 
 
 /*----------------- Conversion functions -----------------*/
 
 /*
-* Function to convert an integer to binary
+* Function to get the next four characters of a string which corresponds to a number and return this number considering its signal
 */
-void intToBinary(char bin[], unsigned int val) {
+int getNumber(char input[], char aux[], int start) {
+    for (int i = 0; i < 4; i++)
+        aux[i] = input[start + i];
+
+    int number = stringToInteger(aux, 4, 10);
+
+    return (input[start - 1] == '-' ? (~number + 1) : number);
+}
+
+
+/*
+* Function to convert an integer to binary - unused
+*/
+/*void intToBinary(char bin[], unsigned int val) {
     int x = 0;
     do {
         bin[x] = val % 2 + '0';
@@ -68,60 +97,38 @@ void intToBinary(char bin[], unsigned int val) {
     }
     reverseArray(bin, 32);
     bin[32] = '\0';
-}
+}*/
+
 
 
 /*
-* Function to pack binary number into one 32-bit binary
+* Function to slice a binary number considering a number of bits
 */
-void packBinary(char tmp_bin[], char bin_packed[], int order) {
-    int num_lsb = 0; // number of least significant bits
-    int start_point; // starting point for the packed binary
-
-    switch (order) {
-        case 0:
-            num_lsb = 3;
-            start_point = 31;
-            break;
-
-        case 1:
-            num_lsb = 8;
-            start_point = 28;
-            break;
-
-        case 2:
-            num_lsb = 5;
-            start_point = 20;
-            break;
-
-        case 3:
-            num_lsb = 5;
-            start_point = 15;
-            break;
-
-        case 4:
-            num_lsb = 11;
-            start_point = 10;
-            break;
-    }
-
-    for (int i = start_point, j = 31; i > (start_point - num_lsb) && j >= (31 - num_lsb + 1); i--, j--) {
-        bin_packed[i] = tmp_bin[j];
+void sliceBinary(int val, int start, int bin[]) {
+    for (int i = start; i >= 0; i--) {
+        bin[i] = (val >> i) & 1;
     }
 }
 
 
 /*
-* Function to convert a binary string to an integer
+* Function that packs a sequence of bit into a 32-bit binary number
 */
-unsigned int binaryToInteger(char binary[]) {
+void packBinary(int packed_bin[], int number, int start, int next_slice) {
+    int tmp_bin[start + 1];
+    sliceBinary(number, start, tmp_bin);
+    copyString(tmp_bin, packed_bin, start, 31 - next_slice);
+}
+
+
+/*
+* Function to convert a binary int array to an integer number
+*/
+unsigned int binaryToInteger(int binary[]) {
     unsigned int result = 0;
-    for (int i = 0; i < 32; i++) {
-        result = result << 1;
-        if (binary[i] == '1') {
-            result = result | 1;
-        }
-    }
+    for (int i = 0; i < 32; i++)
+        result = (result << 1) | binary[i];
+
     return result;
 }
 
@@ -149,41 +156,45 @@ void hexCode(int val) {
 }
 
 
+
 /*----------------------- Main ----------------------*/
 
 int main() {
     char input[30];
     scanf("%[^\n]", input);
 
-    int signals_pos[5] = {0, 6, 12, 18, 24}; // positions of the signals in the input string
-    int tmp_int, signal;
-    char aux[4], tmp_bin[33], packed_bin[33];
+    char aux[4];
 
-    for (int i = 0; i < 5; i++) {
-        for (int j = 0; j < 4; j++)
-            aux[j] = input[signals_pos[i] + j + 1];
+    int packed_bin[33];
 
-        if (input[signals_pos[i]] == '-')
-            signal = -1;
-        else 
-            signal = 1;
+    int tmp_int, pos_final_bit, next_slice = 0;
 
-        tmp_int = stringToInteger(aux, 4, 10);
-
+    for (int i = 0; i < 25; i += 6) {
+        tmp_int = getNumber(input, aux, i + 1);
         printf("%d\n", tmp_int);
 
-        intToBinary(tmp_bin, tmp_int * signal);
-        packBinary(tmp_bin, packed_bin, i);
-        packed_bin[32] = '\0';
+        if (i == 0)
+            pos_final_bit = 2;
 
+        else if (i == 6) {
+            next_slice += pos_final_bit + 1;
+            pos_final_bit = 7;
+        }
 
+        else if (i == 12 || i == 18) {
+            next_slice += pos_final_bit + 1;
+            pos_final_bit = 4;
+        }
+
+        else {
+            next_slice += pos_final_bit + 1;
+            pos_final_bit = 10;
+        }
+
+        packBinary(packed_bin, tmp_int, pos_final_bit, next_slice);
     }
-    
-    int packed_int = binaryToInteger(packed_bin);
-    printf("%d\n", packed_int);
-    
-        
-    hexCode(packed_int);
+
+    hexCode(binaryToInteger(packed_bin));
 
     return 0;
 }
