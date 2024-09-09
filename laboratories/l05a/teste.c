@@ -192,7 +192,12 @@ int main() {
         }
 
         packBinary(packed_bin, tmp_int, pos_final_bit, next_slice);
+        for (int i = 0; i < 33; i++) {
+            printf("%d", packed_bin[i]);
+        }
+        printf("\n");
     }
+
 
     hexCode(binaryToInteger(packed_bin));
 
