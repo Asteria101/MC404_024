@@ -9,117 +9,106 @@ _start:
     ecall
 
 atoi:
-    # a1 has input address
-    la a1, input   # input buffer
-    add t3, a1, a0
-    li t1, 10
+    la a0, input        # load address of the input buffer to a0
 
-    lbu a2, 0(t3)
-    addi a2, a2, -48
-    mul a2, a2, t1
+    add t0, a0, s0      # t0 recieves the memory address of the first char each 4-digit number
+    li s2, 10           # s2 <= 10 representing the base
 
-    lbu t2, 1(t3)
+    lbu a0, 0(t0)       # a0 <= first char
+    addi a0, a0, -48    # turn char into int
+    mul a0, a0, s2      # multiply by 10
+
+    lbu t2, 1(t0)       # t2 <= second char
     addi t2, t2, -48
-    add a2, a2, t2
-    mul a2, a2, t1
+    add a0, a0, t2
+    mul a0, a0, s2
 
-    lbu t2, 2(t3)
+    lbu t2, 2(t0)       # t2 <= third char
     addi t2, t2, -48
-    add a2, a2, t2
-    mul a2, a2, t1
+    add a0, a0, t2
+    mul a0, a0, s2
 
-    lbu t2, 3(t3)
+    lbu t2, 3(t0)       # t2 <= fourth char
     addi t2, t2, -48
-    add a2, a2, t2
+    add a0, a0, t2
 
     ret
 
 sqrt:
-    # a2 has the integer number
-    li t0, 0
-    li t1, 9
-    srli t4, a2, 1         # t4 = y/2 = k
-    for_sqrt:
-        bge t0, t1, end_sqrt
-        
-        mul t2, t4, t4     # t2 = k*k
-        add t2, t2, a2     # t2 = k*k + y
-        slli t3, t4, 1     # t3 = 2*k
-        divu t4, t2, t3    # t4 = (k*k + y) / 2*k
+    # a0 has the integer number
+    li s1, 0
+    li s0, 10
+    srli t1, a0, 1         # t4 = y/2 = k
 
-        addi t0, t0, 1
+    for_sqrt:
+        bge s1, s0, cont_sqrt
+        
+        mul t2, t1, t1     # t2 = k*k
+        add t2, t2, a0     # t2 = k*k + y
+        slli t1, t1, 1     # t3 = 2*k
+        divu t1, t2, t1    # t1 = (k*k + y) / 2*k
+
+        addi s1, s1, 1
         j for_sqrt
 
-    end_sqrt:
-    
-    mv a2, t4
+    cont_sqrt:
+    mv a0, t1
+
     ret
 
 itoa:
-    addi sp, sp, -16
-    sw ra, 0(sp)
+    la a0, output
 
-    la a3, output
-    add t5, a3, a0
+    add t0, a0, s0
 
-    li t0, 3    # counter to iterate
-    li t1, -1    # number used for the bge, so t0 reaches 0
-    li t2, 10   # decimal base to operate the conversion
+    li s1, 3     # counter to iterate
+    li s2, 10    # decimal base to operate the conversion
 
     for_itoa:
+        li t1, -1
+        bge t1, s1, cont_itoa
 
-        bge t0, t1, end_itoa
+        rem t1, a2, s2    # t1 <= a2 % 10
+        addi t1, t1, 48   # t1 <= t1 + 48, turn into char
+        add t2, s1, t0    # access the correct position regarding
+        sb t1, 0(t2)      # stores in the memory
 
-        rem t3, a2, t2    # t3 <= a2 % 10
-        addi t3, t3, 48   # t3 <= t3 + 48, turn into char
-        add t4, t0, t5    # access the correct position regarding t0
-        addi t3, zero, '0'
-        sb t3, 0(t4)      # stores in the memory
+        divu a2, a2, s2
 
-        divu a2, a2, t2
+        addi s1, s1, -1
 
-        addi t0, t0, -1
         j for_itoa
 
-    end_itoa:
-    li t3, ' '
-    sb t3, 4(t4)
+    cont_itoa:
+    mv a0, t0
 
-    lw ra, 0(sp)   
-    addi sp, sp, 16
     ret
-
 
 main:
     addi sp, sp, -16
     sw ra, 0(sp)
     jal read
 
-    li a0, 0
+    li s0, 0
     for:
-        /*bge a0, t0, end_for
-        la s1, output  # output buffer
-        li s0, '\n'
-        sb s0, 19(s1)
-        li s0, 'a'
-        sb s0, 18(s1)
-        jal write*/
+        li s1, 20
+        bge s0, s1, cont
 
-        li t0, 5
         jal atoi
         jal sqrt
+        mv a2, a0
         jal itoa
 
-        addi a0, a0, 5
+        addi s0, s0, 5
         j for
 
-    end_for:
-    la a3, output  # output buffer
+    cont:
+    mv a3, a0
     li t0, '\n'
     sb t0, 19(a3)
-
-
+    debug2:
     jal write
+
 
     lw ra, 0(sp)   
     addi sp, sp, 16
