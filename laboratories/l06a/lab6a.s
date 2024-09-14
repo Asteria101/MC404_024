@@ -80,9 +80,14 @@ itoa:
         j 3b
 
     3:
-    mv a0, t0
+    mv a3, t0
+    li t0, ' '
+    sb t0, 4(a3)
 
     ret
+
+
+
 
 main:
     addi sp, sp, -16
@@ -91,27 +96,20 @@ main:
 
     li s0, 0
     1:
-        li s1, 15
+        li s1, 19
         bge s0, s1, 1f
-
-        debug5:
 
         jal atoi
         jal sqrt
         mv a2, a0
         jal itoa
 
-        li t0, ' '
-        add t1, s0, a0
-        sb t0, 4(t1)
-
         addi s0, s0, 5
         j 1b
 
     1:
-    mv a3, a0
     li t0, '\n'
-    sb t0, 9(a3)
+    sb t0, 4(a3)
     jal write
 
     lw ra, 0(sp)   
