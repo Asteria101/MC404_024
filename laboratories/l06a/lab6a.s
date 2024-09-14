@@ -37,11 +37,11 @@ atoi:
 sqrt:
     # a0 has the integer number
     li s1, 0
-    li s0, 10
+    li s2, 10
     srli t1, a0, 1         # t4 = y/2 = k
 
-    for_sqrt:
-        bge s1, s0, cont_sqrt
+    2:
+        bge s1, s2, 2f
         
         mul t2, t1, t1     # t2 = k*k
         add t2, t2, a0     # t2 = k*k + y
@@ -49,9 +49,9 @@ sqrt:
         divu t1, t2, t1    # t1 = (k*k + y) / 2*k
 
         addi s1, s1, 1
-        j for_sqrt
+        j 2b
 
-    cont_sqrt:
+    2:
     mv a0, t1
 
     ret
@@ -64,22 +64,22 @@ itoa:
     li s1, 3     # counter to iterate
     li s2, 10    # decimal base to operate the conversion
 
-    for_itoa:
+    3:
         li t1, -1
-        bge t1, s1, cont_itoa
+        bge t1, s1, 3f
 
         rem t1, a2, s2    # t1 <= a2 % 10
         addi t1, t1, 48   # t1 <= t1 + 48, turn into char
-        add t2, s1, t0    # access the correct position regarding
+        add t2, s1, t0    # access the correct position regarding the counter
         sb t1, 0(t2)      # stores in the memory
 
         divu a2, a2, s2
 
         addi s1, s1, -1
 
-        j for_itoa
+        j 3b
 
-    cont_itoa:
+    3:
     mv a0, t0
 
     ret
@@ -90,25 +90,29 @@ main:
     jal read
 
     li s0, 0
-    for:
-        li s1, 20
-        bge s0, s1, cont
+    1:
+        li s1, 15
+        bge s0, s1, 1f
+
+        debug5:
 
         jal atoi
         jal sqrt
         mv a2, a0
         jal itoa
 
-        addi s0, s0, 5
-        j for
+        li t0, ' '
+        add t1, s0, a0
+        sb t0, 4(t1)
 
-    cont:
+        addi s0, s0, 5
+        j 1b
+
+    1:
     mv a3, a0
     li t0, '\n'
-    sb t0, 19(a3)
-    debug2:
+    sb t0, 9(a3)
     jal write
-
 
     lw ra, 0(sp)   
     addi sp, sp, 16
