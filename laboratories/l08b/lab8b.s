@@ -6,11 +6,13 @@ _start:
     jal main
     jal exit
 
+
 exit:
     li a0, 0    # return code
     li a7, 93   # syscall exit
     ecall 
     ret
+
 
 open:
     la a0, input_file   # adress for the file path
@@ -20,6 +22,7 @@ open:
     ecall
     ret
 
+
 read:
     mv a0, a6            # file descriptor
     la a1, data          # adress for the buffer
@@ -28,11 +31,13 @@ read:
     ecall
     ret
 
+
 close:
     mv a0, a6            # file descriptor
     li a7, 57            # syscall close
     ecall
     ret
+
 
 treatHeader:
     # return a0: dimension, a1: final position
@@ -41,7 +46,7 @@ treatHeader:
 
     # read width and height
     # a3: start index in header
-    add t0, a2, a3          # i: t0, t0 <= a2 + a3
+    add t0, a2, a3          # i: t0, t0 <= a2 + a3, t0: stores the memory address of the current byte
     li a0, 0                # a0 <= 0
     1:
         lbu t3, 0(t0)       # read byte
@@ -65,23 +70,10 @@ treatHeader:
     mv a1, t0               # a1 <= t0
     ret
 
-setCanvasSize:
-    mv a0, a2     # canvas width
-    mv a1, a3     # canvas height
-    li a7, 2201   # syscall setCanvasSize
-    ecall
-    ret
 
-setPixel:
-    mv a0, a3   # x coordinate
-    mv a1, a4   # y coordinate
-    mv a2, a5   # colour pixel
-    li a7, 2200 # syscall setPixel (2200)
-    ecall
-    ret
+readImage:
+    # returns a0: position where the image matrix starts and stores the width and height values in s0 and s1, respectively
 
-
-main:
     addi sp, sp, -16
     sw ra, 0(sp)
 
@@ -99,47 +91,97 @@ main:
     addi a3, a3, 1      # a3 <= a3 + 1
     jal treatHeader
     mv s1, a0           # s1: stores height, s1 <= a0
-    mv s2, a1           # s2: stores the address pointer where the line
-                        # containing the dimensions end, s2 <= a0
-    add s2, s2, 5
 
-    mv a2, s0           # a2 <= s0
-    mv a3, s1           # a3 <= s1
+    mv a0, a1           # a0 <= a1
+    add a0, a0, 5       # a0 <= a0 + 5, a0: stores the position where the dimensions end, then it adds 5 to get to the start of the image matrix
+
+    lw ra, 0(sp)   
+    addi sp, sp, 16
+    ret    
+
+
+getColourPixel:
+    # a0: byte to be manipulated
+    mv t4, a0           # t4: copy of byte a0 to get the green
+    mv t5, a0           # t5: copy of byte a0 to get the blue
+    slli a0, a0, 24     # shifting for red colour
+    slli t4, t4, 16     # shifting for green colour
+    slli t5, t5, 8      # shifting for blue colour
+
+    add a0, a0, t4
+    add a0, a0, t5
+    addi a0, a0, MAXVAL # alpha value
+    ret
+
+setBorderKernel:
+    # a0: pixel colour
+    # a1: index i (row) of the matrix
+    # a2: index j (column) of the matrix
+
+    addi sp, sp, -16
+    sw ra, 0(sp)
+
+    li t0, 0
+
+    lw ra, 0(sp)   
+    addi sp, sp, 16
+    ret
+
+
+setCanvasSize:
+    li a7, 2201   # syscall setCanvasSize
+    ecall
+    ret
+
+
+setPixel:
+    li a7, 2200   # syscall setPixel (2200)
+    ecall
+    ret
+
+
+main:
+    addi sp, sp, -16
+    sw ra, 0(sp)
+
+    jal readImage
+    mv s2, a0           # s2: stores the position where the image matrix starts, s2 <= a0
+
+    mv a0, s0           # a0 <= s0
+    mv a1, s1           # a1 <= s1
     jal setCanvasSize
 
     # loop to go through image matrix
-    # i: t0, t0 runs through height
-    # j: t1, t1 runs through width
+        # i: t0, t0 runs through height
+        # j: t1, t1 runs through width
+        # x: t3, t3 runs through the image matrix indeces
     li t0, 0
-    li t5, 0 # variable for going through the image matrix
-
-    mul t6, s0, s1
+    li t3, 0 
 
     2:
         li t1, 0
         beq t0, s1, 2f
-        bge t5, t6, 2f
+
+        mul t2, s0, s1
+        bge t3, t2, 2f
         3:
             beq t1, s0, 3f
 
-            add t2, s2, t5
+            add t2, s2, t3      # t2: stores the memory address of the current pixel in the image matrix
             lbu t2, 0(t2)       # stores the byte in t2 for further manipulation
-            mv t3, t2           # green
-            mv t4, t2           # blue
-            slli t2, t2, 24     # shifting for red colour
-            slli t3, t3, 16     # shifting for green colour
-            slli t4, t4, 8      # shifting for blue colour
-            add t2, t2, t3
-            add t2, t2, t4
-            addi t2, t2, 255 # alpha value
 
-            mv a3, t1
-            mv a4, t0
-            mv a5, t2
+            mv a0, t2
+            jal getColourPixel  # get the colour of the pixel
+            mv t2, a0
+
+            # print pixel
+            mv a0, t1
+            mv a1, t0
+            mv a2, t2
             jal setPixel
 
             addi t1, t1, 1
-            addi t5, t5, 1
+            addi t3, t3, 1
             j 3b
         3:
             addi t0, t0, 1
