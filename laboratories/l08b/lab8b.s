@@ -113,20 +113,6 @@ getColourPixel:
     addi a0, a0, MAXVAL # alpha value
     ret
 
-setBorderKernel:
-    # a0: pixel colour
-    # a1: index i (row) of the matrix
-    # a2: index j (column) of the matrix
-
-    addi sp, sp, -16
-    sw ra, 0(sp)
-
-    li t0, 0
-
-    lw ra, 0(sp)   
-    addi sp, sp, 16
-    ret
-
 
 setCanvasSize:
     li a7, 2201   # syscall setCanvasSize
@@ -137,6 +123,25 @@ setCanvasSize:
 setPixel:
     li a7, 2200   # syscall setPixel (2200)
     ecall
+    ret
+
+setScalling:
+    li a7, 2202   # syscall setScalling
+    ecall
+    ret
+
+
+setKernelBorder:
+    # a0: index j (column) of the matrix
+    # a1: index i (row) of the matrix
+    addi sp, sp, -16
+    sw ra, 0(sp)
+
+    li a2, 255 # black colour
+    jal setPixel
+
+    lw ra, 0(sp)   
+    addi sp, sp, 16
     ret
 
 
@@ -174,19 +179,57 @@ main:
             jal getColourPixel  # get the colour of the pixel
             mv t2, a0
 
+            # check if the pixel is in the borders and turn it into black
+            li t4, 0
+            bne t0, t4, 4f
+            mv a0, t1
+            mv a1, t0
+            jal setKernelBorder
+            j cont
+
+            4:
+            bne t1, t4, 5f
+            mv a0, t1
+            mv a1, t0
+            jal setKernelBorder
+            j cont
+
+            5:
+            addi t4, s0, -1
+            bne t1, t4, 6f
+            mv a0, t1
+            mv a1, t0
+            jal setKernelBorder
+            j cont
+
+            6:
+            addi t4, s1, -1
+            bne t0, t4, 7f
+            
+            mv a0, t1
+            mv a1, t0
+            jal setKernelBorder
+            j cont
+
+            7:
             # print pixel
             mv a0, t1
             mv a1, t0
             mv a2, t2
             jal setPixel
 
-            addi t1, t1, 1
-            addi t3, t3, 1
-            j 3b
+            cont:
+                addi t1, t1, 1
+                addi t3, t3, 1
+                j 3b
         3:
             addi t0, t0, 1
             j 2b
     2:
+
+    li a0, 4
+    li a1, 2
+    jal setScalling
 
     lw ra, 0(sp)   
     addi sp, sp, 16
