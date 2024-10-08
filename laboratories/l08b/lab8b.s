@@ -100,6 +100,12 @@ readImage:
     ret    
 
 
+setPixel:
+    li a7, 2200   # syscall setPixel (2200)
+    ecall
+    ret
+
+
 getColourPixel:
     # a1: byte to be manipulated
     # t0: copy of byte a1 to get the green
@@ -109,49 +115,69 @@ getColourPixel:
     slli a1, a1, 24     # shifting for red colour
     slli t0, t0, 16     # shifting for green colour
     slli t1, t1, 8      # shifting for blue colour
-
+    debug:
     add a1, a1, t0
     add a1, a1, t1
-    addi a1, a1, MAXVAL # alpha value
+    addi a1, a1, 255 # alpha value
 
-    li t0, 0
-    bge a1, t0, 1f           # if a1 >= 0, go to 1
-    li a1, 0
-    1:
-        li t0, MAXVAL
-        blt a1, t0, 2f  # if a1 < MAXVAL, go to 2
-        li a1, MAXVAL
-    2:
-
+    slli a1, a1, 2
+    
     ret
 
 
 processPixel:
     addi sp, sp, -16
     sw ra, 0(sp)
-    
-    # a0: memory address of the first pixel
+    # a1: i row index
+    # a0: j column index
+    # a2: memory address of the pixel
+
     # s0: width value of the image
+    # s1: height value of the image
+
     # the processing of the pixel begins for the 
     # first pixel in the image matrix that isnt in the borders
     # 1 2 3
     # 4 x 5  -> x: pixel to be processed, {1...8} are the neighbours
     # 6 7 8
 
+    # condition to check border limits
+    li t0, 0
+    bne a1, t0, 1f
+    li a0, 255
+    j 5f
+
+    1:
+    bne a0, t0, 2f
+    li a0, 255
+    j 5f
+
+    2:
+    addi t0, s0, -1
+    bne a0, t0, 3f
+    li a0, 255
+    j 5f
+
+    3:
+    addi t0, s1, -1
+    bne a1, t0, 4f
+    li a0, 255
+    j 5f
+
+    4:
     # pixel 1:
-    sub t0, a0, s0
+    sub t0, a2, s0
     addi t0, t0, -1
     lbu t0, 0(t0)
-
     mv a1, t0
     jal getColourPixel
     mv t0, a1
-
     li t1, -1
     mul t2, t0, t1
+    debug1:
 
     # pixel 2:
-    sub t0, a0, s0
+    sub t0, a2, s0
     lbu t0, 0(t0)
     mv a1, t0
     jal getColourPixel
@@ -159,9 +185,10 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    debug2:
 
     # pixel 3:
-    sub t0, a0, s0
+    sub t0, a2, s0
     addi t0, t0, 1
     lbu t0, 0(t0)
     mv a1, t0
@@ -170,9 +197,10 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    debug3:
 
     # pixel 4:
-    addi t0, a0, -1
+    addi t0, a2, -1
     lbu t0, 0(t0)
     mv a1, t0
     jal getColourPixel
@@ -180,18 +208,20 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    debug4:
 
     # pixel x:
-    lbu t0, 0(a0)
+    lbu t0, 0(a2)
     mv a1, t0
     jal getColourPixel
     mv t0, a1
     li t1, 8
     mul t0, t0, t1
     add t2, t2, t0
+    debugx:
 
     # pixel 5:
-    addi t0, a0, 1
+    addi t0, a2, 1
     lbu t0, 0(t0)
     mv a1, t0
     jal getColourPixel
@@ -199,9 +229,10 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    debug5:
 
     # pixel 6:
-    add t0, a0, s0
+    add t0, a2, s0
     addi t0, t0, -1
     lbu t0, 0(t0)
     mv a1, t0
@@ -210,9 +241,10 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    debug6:
 
     # pixel 7:
-    add t0, a0, s0
+    add t0, a2, s0
     lbu t0, 0(t0)
     mv a1, t0
     jal getColourPixel
@@ -220,9 +252,10 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    debug7:
 
     # pixel 8:
-    add t0, a0, s0
+    add t0, a2, s0
     addi t0, t0, 1
     lbu t0, 0(t0)
     mv a1, t0
@@ -231,9 +264,18 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
+    
+    mv a0, t2
 
-    mv a0, t2 # a0: stores the new colour of the pixel
+    li t0, 0
+    bge t2, t0, 6f
+    li a0, 0
+    6:
+    li t0, MAXVAL
+    blt t2, t0, 5f
+    li a0, 255
 
+    5:
     lw ra, 0(sp)   
     addi sp, sp, 16
     ret
@@ -245,18 +287,10 @@ setCanvasSize:
     ret
 
 
-setPixel:
-    li a7, 2200   # syscall setPixel (2200)
-    ecall
-    ret
-
-
 setScalling:
     li a7, 2202   # syscall setScalling
     ecall
     ret
-
-
 
 
 initializeImage:
@@ -272,28 +306,33 @@ initializeImage:
     addi sp, sp, -16
     sw ra, 0(sp)
 
-    li t0, 0
-    li t2, 0 
+    li t0, 0        # i: t0 <= 0
+    li t2, 0        # x: t2 <= 0
 
     1:
-        beq t0, s1, 1f
+        beq t0, s1, 1f          # if ir reaches the last row, go to 1
 
-        li t1, 0
+        li t1, 0                # j: t1 <= 0
 
-        mul t3, s0, s1
-        bge t2, t3, 1f
+        mul t3, s0, s1          # t3: stores the total number of pixels in the image matrix
+        bge t2, t3, 1f          # if t2 >= t3, go to 1, which means it reached the end of the image
+
         2:
-            beq t1, s0, 2f
+            beq t1, s0, 2f      # if it reaches the last column, go to 2
 
-            add t3, s2, t2      # t3: stores the memory address of the current pixel in the image matrix
+            add t3, s2, t2
 
             addi sp, sp, -12
             sw t0, 8(sp)
             sw t1, 4(sp)
             sw t2, 0(sp)
-            mv a0, t3
+
+            mv a0, t1
+            mv a1, t0
+            mv a2, t3
             jal processPixel
             mv t3, a0
+
             lw t2, 0(sp)
             lw t1, 4(sp)
             lw t0, 8(sp)
