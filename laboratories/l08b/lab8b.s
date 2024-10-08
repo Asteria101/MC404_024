@@ -115,13 +115,20 @@ getColourPixel:
     slli a1, a1, 24     # shifting for red colour
     slli t0, t0, 16     # shifting for green colour
     slli t1, t1, 8      # shifting for blue colour
-    debug:
+    
     add a1, a1, t0
     add a1, a1, t1
     addi a1, a1, 255 # alpha value
-
-    slli a1, a1, 2
     
+    li t0, 0
+    bge a1, t0, 1f
+    li a1, 0
+    1:
+    li t0, MAXVAL
+    blt a1, t0, 2f
+    li a1, 255
+
+    2:
     ret
 
 
@@ -145,24 +152,24 @@ processPixel:
     li t0, 0
     bne a1, t0, 1f
     li a0, 255
-    j 5f
+    j 6f
 
     1:
     bne a0, t0, 2f
     li a0, 255
-    j 5f
+    j 6f
 
     2:
     addi t0, s0, -1
     bne a0, t0, 3f
     li a0, 255
-    j 5f
+    j 6f
 
     3:
     addi t0, s1, -1
     bne a1, t0, 4f
     li a0, 255
-    j 5f
+    j 6f
 
     4:
     # pixel 1:
@@ -174,7 +181,7 @@ processPixel:
     mv t0, a1
     li t1, -1
     mul t2, t0, t1
-    debug1:
+    
 
     # pixel 2:
     sub t0, a2, s0
@@ -185,7 +192,7 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    debug2:
+    
 
     # pixel 3:
     sub t0, a2, s0
@@ -197,7 +204,7 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    debug3:
+    
 
     # pixel 4:
     addi t0, a2, -1
@@ -208,7 +215,7 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    debug4:
+    
 
     # pixel x:
     lbu t0, 0(a2)
@@ -218,7 +225,7 @@ processPixel:
     li t1, 8
     mul t0, t0, t1
     add t2, t2, t0
-    debugx:
+    
 
     # pixel 5:
     addi t0, a2, 1
@@ -229,8 +236,7 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    debug5:
-
+    
     # pixel 6:
     add t0, a2, s0
     addi t0, t0, -1
@@ -241,7 +247,7 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    debug6:
+    
 
     # pixel 7:
     add t0, a2, s0
@@ -252,7 +258,7 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    debug7:
+    
 
     # pixel 8:
     add t0, a2, s0
@@ -264,18 +270,13 @@ processPixel:
     li t1, -1
     mul t0, t0, t1
     add t2, t2, t0
-    
+
+    addi t2, t2, -255
+
+    mul t2, t2, t1
+
     mv a0, t2
-
-    li t0, 0
-    bge t2, t0, 6f
-    li a0, 0
     6:
-    li t0, MAXVAL
-    blt t2, t0, 5f
-    li a0, 255
-
-    5:
     lw ra, 0(sp)   
     addi sp, sp, 16
     ret
