@@ -1,6 +1,3 @@
-.text
-
-.globl _start
 .globl exit
 .globl puts
 .globl gets
@@ -16,54 +13,46 @@ exit:
     ret
 
 
-puts:
+gets:
     # a0: buffer pointer
-    # a1: buffer size THIS CANT BE A PARAMETER
-    # returns: void
+    # returns: null-terminated string (a0: buffer pointer)
 
-    li t0, '\n'
-    add t1, a0, a1
-    sb t0, 0(t1)
-
-    mv a4, a0
-    addi a1, a1, 1
-    mv a3, a1
-
-    li a0, 1             # file descriptor
-    mv a1, a4            # buffer pointer
-    mv a2, a3            # buffer size
-    li a7, 64            # syscall write
+    mv a3, a0
+    mv a1, a0
+    li a0, 0             # file descriptor
+    li a2, 1000000       # buffer size
+    li a7, 63            # syscall read
     ecall
+    #add t0, a0, a3
+    #addi t0, t0, -1
+    #sb zero, (t0)
+
+    mv a0, a3
     ret
 
 
-gets:
+puts:
     # a0: buffer pointer
-    # returns: buffer filled (a0: buffer pointer), string size without \0 (a1)
+    # returns: void
 
-    mv a1, a0
-    li a2, 100           # buffer size
-    li a0, 0             # file descriptor
-    li a7, 63            # syscall read
-    ecall
-    mv a3, a0
-    addi a3, a3, -1
-
-    li t0, '\n'
-    mv t1, a1            # t1 <= a1, t1 iterates over the buffer
+    mv a1, a0            # buffer pointer
+    li a2, 1
     1:
-        lbu t2, 0(t1)
-        beq t2, t0, 1f
-        addi t1, t1, 1
+        lbu t1, (a1)
+        beq t1, zero, 1f
+        addi a2, a2, 1
+        addi a1, a1, 1
         j 1b
     1:
-    li t0, 3
-    sb t0, 0(t1)
+    li t1, '\n'
+    sb t1, (a1)
 
-    mv a0, a1
-    mv a1, a3
+    mv a1, a0
+    li a0, 1             # file descriptor
+    li a7, 64            # syscall write
+    ecall
 
-    debug:
+    sb zero, (a1)
 
     ret
 
@@ -71,64 +60,35 @@ gets:
 atoi:
     # Turns a string into a signed integer
     # a0: buffer pointer
-    #   
     # returns: integer (a0)
-    mv a3, a1
-    add a3, a0, a3
+
     li t2, 1                 # t2 <= 1, for the signal
-    li a1, 0                 # a1 <= 0, stores the number
+    li a2, 0                 # a2 <= 0, stores the number
+    mv a1, a0
+
+    li t1, '-'           # t1 <= '-'
+    lbu t0, (a1)
+    bne t0, t1, 1f       # if t0 != '-', go to 1
+    li t2, -1            # t2 <= -1
+    addi a1, a1, 1
+
     1:
-        beq a0, a3, 1f       # if a0 == size, go to 1
+        lbu t0, (a1)        # t0 <= char
+        li t1, '\n'
+        beq t0, t1, 1f
+        beq t0, zero, 1f     # if t0 == NULL, go to 1
 
-        lbu t0, 0(a0)        # t0 <= first char
-
-        li t1, '-'           # t1 <= '-'
-        bne t0, t1, 2f       # if t0 != '-', go to 2
-        li t2, -1            # t2 <= -1
-        j 3f
-
-        2:
         li t1, 10            # t1 <= 10
         addi t0, t0, -48     # t0 <= t0 - '0'
-        add a1, a1, t0       # a1 <= a1 + t0
-        mul a1, a1, t1       # a1 <= a1 * 10
+        add a2, a2, t0       # a2 <= a2 + t0
+        mul a2, a2, t1       # a2 <= a2 * 10
 
-        3:
-        addi a0, a0, 1
+        addi a1, a1, 1
         j 1b
     1:
-    li t1, 10            # t1 <= 10
-    div a1, a1, t1       # a1 <= a1 / 10
-    mul a1, a1, t2       # a1 <= a1 * t2
 
-
-    mv a0, a1
-    ret
-
-
-getDigitsNumber:
-    # a0: has the number
-    # returns: number of digits (a0)
-
-    mv t2, a0
-
-    li t0, 0
-    bge t2, t0, 1f      # if t2 >= 0, go to 1
-    li t0, -1
-    mul t2, t2, t0      # else: t2 < 0, t2 *= -1
-
-    1:
-    li t0, 0            # number of digits
-    li t1, 10           # base
-
-    2:
-    addi t0, t0, 1
-    blt t2, t1, 2f      # if t2 < 10, go to 2
-    div t2, t2, t1      # t2 /= 10
-    j 2b
-
-    2:
-    mv a0, t0
+    div a2, a2, t1       # a2 <= a2 / 10
+    mul a0, a2, t2       # a0 <= a2 * t2 signal
 
     ret
 
@@ -139,67 +99,70 @@ itoa:
     # a1: has the buffer addres
     # a2: has the base to be converted
 
-    # returns: the buffer pointer (a0), buffer size (a1 <= s0)
+    # returns: the buffer pointer (a0)
 
-    addi sp, sp, -12
-    sw ra, 8(sp)
+    mv t0, a1 # &buffer
 
-    sw a0, 4(sp)
-    jal getDigitsNumber
-    mv s0, a0               # s0 <= a0, stores the number of digits
-    lw a0, 4(sp)            # reload to a0 the integer
+    li t4, 0 # inicial buffer index
 
-    # Check if the number is negative
-    sw s0, 0(sp)            # store the number of digits for adding the \n
+    # Treat negative numbers
+    bge a0, zero, positive # t1 >= 0 go to positive
+    li t1, '-'
+    sb t1, (t0) # store minus signal
+    li t1, -1
+    mul a0, a0, t1 # a0 *= -1
+    addi t0, t0, 1 # buffer++
+    li t4, 1 # inicial buffer index
 
-    li t0, 0                # t0 <= 0
-    bge a0, t0, 1f          # if a0 >= 0, go to 1
 
-    li t0, '-'              # else: t0 <= '-', stores the signal
-    sb t0, 0(a1)
-    li t0, -1               # t0 <= -1
-    mul a0, a0, t0          # a0 <= a0 * -1    turns the number positive
-    addi a1, a1, 1          # a1 <= a1 + 1     buffer++
+    positive:
+
+    # Count number of digits
+    li t1, 0 # counter
+    li t2, 10 # base 10
+    mv t3, a0 # t3 <= a0
+    1:
+    addi t1, t1, 1 # t1++
+    div t3, t3, t2 # t3 /= 10
+
+    beq t3, zero, 1f
+    j 1b
 
     1:
-        li t0, 0
-        bge t0, s0, 1f
+    add t0, t0, t1 # last index of buffer
+    addi t0, t0, 1 # includes the null terminator
+    sb zero, (t0) # adds null terminator
+    addi t0, t0, -1 # t0--
 
-        rem t0, a0, a2        # t0 <= a0 % base
+    addi t1, t1, -1 # t1--, removes 1 because condition is checked afterwards
 
-        li t1, 10
-        blt t0, t1, 2f        # if t0 <= 9, go to 2
+    # Add number to buffer
+    2:
+        rem t2, a0, a2 # t2 <= a0 % base
 
-        sub t0, t0, t1        # t0 -= 10
-        addi t0, t0, 'A'      # else: t0 <= t0 + 'A'
-        j 3f
+        li t3, 10
+        blt t2, t3, 3f # if t2 <= 9, go to 3
 
-        2:
-        addi t0, t0, 48       # t0 <= t0 + '0'
-        
+        # range A to F
+        sub t2, t2, t3 # t2 -= 10
+        addi t2, t2, 'A' # t2 += 'A'
+        j 4f
+
         3:
-        add t1, s0, a1        # access the correct position regarding the counter
-        sb t0, 0(t1)          # store the digit in the buffer
-        divu a0, a0, a2       # a0 <= a0 / base
+        # range 0 to 9
+        addi t2, t2, 48 # t2 += '0'
 
-        addi s0, s0, -1
-        j 1b
+        4:
+        sb t2, (t0) # store number
+        div a0, a0, a2
 
-    1:
-    lw s0, 0(sp)
+        bge t4, t1, 2f # if t4 >= t2, break
+        addi t0, t0, -1 # t0--
+        addi t1, t1, -1 # t1--
+        j 2b
 
-    li t0, '\0'
-    add t1, s0, a1
-    addi t1, t1, 1
-    sb t0, 0(t1)    
-
-    sub t1, t1, s0
-
-    mv a0, t1
-    mv a1, s0
-
-    lw ra, 8(sp)
-    addi sp, sp, 12
+    2:
+    mv a0, t0
 
     ret
 
