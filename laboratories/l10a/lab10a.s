@@ -7,8 +7,6 @@
 .globl atoi
 .globl itoa
 .globl linked_list_search
-.globl buffer
-.globl number
 
 
 exit:
@@ -20,9 +18,8 @@ exit:
 
 puts:
     # a0: buffer pointer
-    # a1: buffer size
+    # a1: buffer size THIS CANT BE A PARAMETER
     # returns: void
-
 
     li t0, '\n'
     add t1, a0, a1
@@ -37,14 +34,14 @@ puts:
     mv a2, a3            # buffer size
     li a7, 64            # syscall write
     ecall
-
     ret
 
 
 gets:
-    # a1: buffer pointer
+    # a0: buffer pointer
     # returns: buffer filled (a0: buffer pointer), string size without \0 (a1)
-    la a1, buffer
+
+    mv a1, a0
     li a2, 100           # buffer size
     li a0, 0             # file descriptor
     li a7, 63            # syscall read
@@ -53,19 +50,20 @@ gets:
     addi a3, a3, -1
 
     li t0, '\n'
-    mv t1, a1      # t1 <= a1, t1 iterates over the buffer
+    mv t1, a1            # t1 <= a1, t1 iterates over the buffer
     1:
         lbu t2, 0(t1)
         beq t2, t0, 1f
         addi t1, t1, 1
         j 1b
     1:
-    li t0, '\0'
+    li t0, 3
     sb t0, 0(t1)
 
     mv a0, a1
     mv a1, a3
 
+    debug:
 
     ret
 
@@ -73,7 +71,7 @@ gets:
 atoi:
     # Turns a string into a signed integer
     # a0: buffer pointer
-    # a1: string size
+    #   
     # returns: integer (a0)
     mv a3, a1
     add a3, a0, a3
@@ -173,7 +171,7 @@ itoa:
         blt t0, t1, 2f        # if t0 <= 9, go to 2
 
         sub t0, t0, t1        # t0 -= 10
-        addi t0, t0, 'a'      # else: t0 <= t0 + 'a'
+        addi t0, t0, 'A'      # else: t0 <= t0 + 'A'
         j 3f
 
         2:
@@ -203,4 +201,38 @@ itoa:
     lw ra, 8(sp)
     addi sp, sp, 12
 
+    ret
+
+
+linked_list_search:
+    # Search for sum in the linked list
+    # a0: head_node address
+    # a1: value to be found
+
+    li t0, 0               # t0 <= 0, will iterate through the linked list
+    lw s1, 0(a0)           # s1 <= *head
+
+    1:
+        li t1, 0
+        beq s1, t1, 3f         # if s1 == NULL, go to 1
+        lw s2, 0(a0)           # s2 <= *s1 (VAL1)
+        lw s3, 4(a0)           # s3 <= *(s1 + 4) (VAL2)
+        add s2, s2, s3         # s2 <= s2 + s3
+
+        beq s2, a1, 2f         # if s2 == a1, go to 2
+
+        addi t0, t0, 1
+        lw a0, 8(a0)           # s1 <= *(s1 + 8)  (pointer to the next node)
+        lw s1, 0(a0)           # s1 <= *s1
+
+        j 1b
+
+    2:
+    mv a0, t0
+    j 1f
+
+    3:
+    li a0, -1
+
+    1:
     ret
