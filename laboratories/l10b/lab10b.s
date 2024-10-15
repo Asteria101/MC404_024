@@ -19,7 +19,7 @@ gets:
     # returns: null-terminated string (a0: buffer pointer)
 
     addi sp, sp, -16
-    sw a0, (sp) # store buffer pointer
+    sw a0, (sp)              # store buffer pointer
 
     mv a3, a0
     1:
@@ -79,14 +79,14 @@ atoi:
     li a2, 0                 # a2 <= 0, stores the number
     mv a1, a0
 
-    li t1, '-'           # t1 <= '-'
+    li t1, '-'               # t1 <= '-'
     lbu t0, (a1)
-    bne t0, t1, 1f       # if t0 != '-', go to 1
-    li t2, -1            # t2 <= -1
+    bne t0, t1, 1f           # if t0 != '-', go to 1
+    li t2, -1                # t2 <= -1
     addi a1, a1, 1
 
     1:
-        lbu t0, (a1)        # t0 <= char
+        lbu t0, (a1)         # t0 <= char
         li t1, '\n'
         beq t0, t1, 1f
         beq t0, zero, 1f     # if t0 == NULL, go to 1
@@ -100,8 +100,8 @@ atoi:
         j 1b
     1:
 
-    div a2, a2, t1       # a2 <= a2 / 10
-    mul a0, a2, t2       # a0 <= a2 * t2 signal
+    div a2, a2, t1           # a2 <= a2 / 10
+    mul a0, a2, t2           # a0 <= a2 * t2 signal
 
     ret
     
@@ -113,24 +113,8 @@ itoa:
     # a2: has the base to be converted
 
     # returns: the buffer pointer (a0)
-    addi sp, sp, -16
-    sw ra, (sp)
 
     mv t0, a1 # &buffer
-
-    li t4, 0 # inicial buffer index
-
-    # Treat negative numbers
-    bge a0, zero, positive # t1 >= 0 go to positive
-    li t1, '-'
-    sb t1, (t0) # store minus signal
-    li t1, -1
-    mul a0, a0, t1 # a0 *= -1
-    //addi t0, t0, 1 # buffer++
-    li t4, 1 # inicial buffer index
-
-
-    positive:
 
     # Count number of digits
     li t1, 0 # counter
@@ -144,7 +128,6 @@ itoa:
     j 1b
 
     1:
-    add t1, t1, t4
     add t0, a1, t1 # last index of buffer
 
     addi t0, t0, 1 # includes the null terminator
@@ -156,57 +139,78 @@ itoa:
     # Add number to buffer
     2:
         rem t2, a0, a2 # t2 <= a0 % base
-
-        li t3, 10
-        blt t2, t3, 3f # if t2 <= 9, go to 3
-
-        # range A to F
-        sub t2, t2, t3 # t2 -= 10
-        addi t2, t2, 'A' # t2 += 'A'
-        j 4f
-
-        3:
-        # range 0 to 9
         addi t2, t2, 48 # t2 += '0'
-
-        4:
         sb t2, (t0) # store number
         div a0, a0, a2
 
-        bge t4, t1, 2f # if 0 >= t2, break
+        bge zero, t1, 2f # if 0 >= t2, break
         addi t0, t0, -1 # t0--
         addi t1, t1, -1 # t1--
         j 2b
 
     2:
     mv a0, t0
-
-    li t0, 16
-    beq a2, t0, 5f
-    j 6f
-
-    5:
-    # Remove extra zeros in hexadecimal numbers
-    lbu t0, (a0)
-    li t1, '0'
-    bne t0, t1, 6f
-    addi a0, a0, 1
-
-    6:
-    # Treat case of -1
-    mv t1, a0
-    lbu t0, (t1)
-    li t2, '1'
-    bne t0, t2, 7f
-    addi t1, t1, 1
-    lbu t0, (t1)
-    bne t0, zero, 7f
-    addi a0, a0, -1
-    li t0, '-'
-    sb t0, (a0)
-
-    7:
-    lw ra, (sp)
-    addi sp, sp, 16
-
     ret
+
+
+recursive_tree_search:
+    # Operates a recursive search on a binary tree
+    # a0: has the root of the tree
+    # a1: has the value to be searched
+
+    # returns: the depth of the tree, 0 otherwise (a0)
+
+    addi sp, sp, -8
+    sw ra, 4(sp)
+    sw fp, (sp)
+
+    addi fp, sp, 8
+    sw ra, (fp)
+    li a2, 0 # depth
+
+    addi sp, sp, -4
+    sw a0, (sp)
+
+    # It is like this is a new function that contains the 
+    # same parameters as recursive_tree_search, but also 
+    # the node depth (a2)
+    depth_first_search:
+        lw a0, (sp) # load root of the tree
+        addi sp, sp, -4 
+        sw ra, (sp) # store return address for recursive_tree_search
+
+        addi a2, a2, 1 # depth++
+        
+        lw t0, 0(a0) # load node->val
+        beq a1, t0, found # if node->val == val, found
+
+        lw t0, 4(a0) # load node->left
+        beq t0, zero, search_right # if node->left == NULL, search_right
+
+        # search left
+        addi sp, sp, -4
+        sw t0, (sp) # store node->left
+        jal depth_first_search
+
+        search_right:
+        lw a0, 4(sp)
+        lw t1, 8(a0) # load node->right
+
+        beq t1, zero, not_found # if node->right == NULL, not_found
+
+        addi sp, sp, -4
+        sw t1, (sp) # store node->right
+        jal depth_first_search  
+
+
+        not_found:
+            lw ra, (sp)
+            addi sp, sp, 8
+            addi a2, a2, -1 # depth--
+            beq a2, zero, found
+            ret
+
+    found:
+        lw ra, (fp)
+        mv a0, a2
+        ret
