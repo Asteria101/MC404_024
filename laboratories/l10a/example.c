@@ -1,7 +1,7 @@
 #include "lib.h"
 
 char buffer[100];
-int number = 635;
+int number = 3752;
 
 #define NULL 0
 
@@ -19,13 +19,13 @@ void run_operation(int op){
             puts(buffer);
             break;
 
-        case 1:
+        case 1: 
             gets(buffer);
             puts(buffer);
             break;
 
         case 2:
-            puts(itoa(number, buffer, 10));
+            puts(itoa(number, buffer, 16));
             break;
 
         case 3:
@@ -41,7 +41,7 @@ void run_operation(int op){
 
         case 5:
             val = atoi(gets(buffer));
-            //puts(itoa(linked_list_search(&head_node, val), buffer, 10));
+            puts(itoa(linked_list_search(&head_node, val), buffer, 10));
             break;
         
         default:
