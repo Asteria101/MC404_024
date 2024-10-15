@@ -14,20 +14,33 @@ exit:
 
 
 gets:
+    # This function gets char per char until it reaches a newline
     # a0: buffer pointer
     # returns: null-terminated string (a0: buffer pointer)
 
-    mv a3, a0
-    mv a1, a0
-    li a0, 0             # file descriptor
-    li a2, 1000000       # buffer size
-    li a7, 63            # syscall read
-    ecall
-    #add t0, a0, a3
-    #addi t0, t0, -1
-    #sb zero, (t0)
+    addi sp, sp, -16
+    sw a0, (sp) # store buffer pointer
 
-    mv a0, a3
+    mv a3, a0
+    1:
+        li a0, 0
+        mv a1, a3
+        li a2, 1
+        li a7, 63            # syscall read
+        ecall
+        
+        li t0, '\n'
+        lb t1, (a1)
+        beq t1, t0, 1f
+        sb t1, (a3)
+        addi a3, a3, 1
+        j 1b
+
+    1:
+    sb zero, (a3)
+    lw a0, (sp)
+    addi sp, sp, 16
+
     ret
 
 
@@ -91,7 +104,7 @@ atoi:
     mul a0, a2, t2       # a0 <= a2 * t2 signal
 
     ret
-
+    
 
 itoa:
     # Turns a signed integer into a string
@@ -100,6 +113,8 @@ itoa:
     # a2: has the base to be converted
 
     # returns: the buffer pointer (a0)
+    addi sp, sp, -16
+    sw ra, (sp)
 
     mv t0, a1 # &buffer
 
@@ -111,7 +126,7 @@ itoa:
     sb t1, (t0) # store minus signal
     li t1, -1
     mul a0, a0, t1 # a0 *= -1
-    addi t0, t0, 1 # buffer++
+    //addi t0, t0, 1 # buffer++
     li t4, 1 # inicial buffer index
 
 
@@ -129,7 +144,9 @@ itoa:
     j 1b
 
     1:
-    add t0, t0, t1 # last index of buffer
+    add t1, t1, t4
+    add t0, a1, t1 # last index of buffer
+
     addi t0, t0, 1 # includes the null terminator
     sb zero, (t0) # adds null terminator
     addi t0, t0, -1 # t0--
@@ -156,13 +173,41 @@ itoa:
         sb t2, (t0) # store number
         div a0, a0, a2
 
-        bge t4, t1, 2f # if t4 >= t2, break
+        bge t4, t1, 2f # if 0 >= t2, break
         addi t0, t0, -1 # t0--
         addi t1, t1, -1 # t1--
         j 2b
 
     2:
     mv a0, t0
+
+    li t0, 16
+    beq a2, t0, 5f
+    j 6f
+
+    5:
+    # Remove extra zeros in hexadecimal numbers
+    lbu t0, (a0)
+    li t1, '0'
+    bne t0, t1, 6f
+    addi a0, a0, 1
+
+    6:
+    # Treat case of -1
+    mv t1, a0
+    lbu t0, (t1)
+    li t2, '1'
+    bne t0, t2, 7f
+    addi t1, t1, 1
+    lbu t0, (t1)
+    bne t0, zero, 7f
+    addi a0, a0, -1
+    li t0, '-'
+    sb t0, (a0)
+
+    7:
+    lw ra, (sp)
+    addi sp, sp, 16
 
     ret
 
@@ -176,13 +221,12 @@ linked_list_search:
     lw s1, 0(a0)           # s1 <= *head
 
     1:
-        li t1, 0
-        beq s1, t1, 3f         # if s1 == NULL, go to 1
+        beq s1, zero, 2f       # if s1 == NULL, go to 2
         lw s2, 0(a0)           # s2 <= *s1 (VAL1)
         lw s3, 4(a0)           # s3 <= *(s1 + 4) (VAL2)
         add s2, s2, s3         # s2 <= s2 + s3
 
-        beq s2, a1, 2f         # if s2 == a1, go to 2
+        beq s2, a1, 1f         # if s2 == a1, go to 1
 
         addi t0, t0, 1
         lw a0, 8(a0)           # s1 <= *(s1 + 8)  (pointer to the next node)
@@ -190,12 +234,12 @@ linked_list_search:
 
         j 1b
 
-    2:
+    1:
     mv a0, t0
-    j 1f
+    j 3f
 
-    3:
+    2:
     li a0, -1
 
-    1:
+    3:
     ret
