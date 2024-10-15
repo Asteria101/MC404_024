@@ -113,9 +113,6 @@ itoa:
     # a2: has the base to be converted
 
     # returns: the buffer pointer (a0)
-    addi sp, sp, -16
-    sw ra, (sp)
-
     mv t0, a1 # &buffer
 
     li t4, 0 # inicial buffer index
@@ -206,8 +203,6 @@ itoa:
     sb t0, (a0)
 
     7:
-    lw ra, (sp)
-    addi sp, sp, 16
 
     ret
 
@@ -218,19 +213,19 @@ linked_list_search:
     # a1: value to be found
 
     li t0, 0               # t0 <= 0, will iterate through the linked list
-    lw s1, 0(a0)           # s1 <= *head
+    lw t1, 0(a0)           # t1 <= *head
 
     1:
-        beq s1, zero, 2f       # if s1 == NULL, go to 2
-        lw s2, 0(a0)           # s2 <= *s1 (VAL1)
-        lw s3, 4(a0)           # s3 <= *(s1 + 4) (VAL2)
-        add s2, s2, s3         # s2 <= s2 + s3
+        beq t1, zero, 2f       # if t1 == NULL, go to 2
+        lw t2, 0(a0)           # t2 <= *t1 (VAL1)
+        lw t3, 4(a0)           # t3 <= *(t1 + 4) (VAL2)
+        add t2, t2, t3         # t2 <= t2 + t3
 
-        beq s2, a1, 1f         # if s2 == a1, go to 1
+        beq t2, a1, 1f         # if t2 == a1, go to 1
 
         addi t0, t0, 1
-        lw a0, 8(a0)           # s1 <= *(s1 + 8)  (pointer to the next node)
-        lw s1, 0(a0)           # s1 <= *s1
+        lw a0, 8(a0)           # t1 <= *(t1 + 8)  (pointer to the next node)
+        lw t1, 0(a0)           # t1 <= *t1
 
         j 1b
 
