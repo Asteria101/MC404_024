@@ -71,7 +71,6 @@ mmio_write:
 
 reverse_string:
     # Function that will reserve a string and copy the reversed string to a destination pointer
-
     # a0: string pointer
     # a1: aux_string pointer
 
@@ -108,8 +107,8 @@ reverse_string:
 
 atoi:
     # Function to turn a string into a decimal number
-
-    # a0: string pointer 
+    # a0: string pointer
+    # a1: when to stop 
     # returns: integer (a0)
 
     li t0, 1 # for signal calculations
@@ -118,8 +117,7 @@ atoi:
         lbu t2, (a0)
 
         # check new line char
-        li t3, '\n'
-        beq t3, t2, 0f
+        beq a1, t2, 0f
 
         # check minus signal 
         li t3, '-'
@@ -148,7 +146,6 @@ atoi:
 
 itoa_hex:
     # Function to turn an integer to its string hexdecimal representation 
-
     # a0: integer number
     # a1: string pointer that will store hex number
 
@@ -196,10 +193,163 @@ itoa_hex:
     ret
 
 
+itoa_dec:
+    # Function to turn an integer to its string decimal representation
+    # a0: integer number
+    # a1: string pointer
+
+    bnez a0, 4f
+    li t0, '0'
+    sb t0, (a1)
+    li t0, '\n'
+    sb t0, 1(a1)
+    j return
+
+    4:
+    li t0, 0 # counter
+    mv t2, a0 # t3 <= a0
+    2:
+        addi t0, t0, 1 # t1++
+        li t1, 10 # base 10
+        div t2, t2, t1 # t3 /= 10
+
+        beqz t2, 2f
+        j 2b
+    2:
+    add t2, a1, t0
+
+    li t3, 1
+
+    bgez a0, 0f
+    li t3, -1
+    mul a0, a0, t3
+
+    0:
+        li t0, 10
+        remu t0, a0, t0 # t0 <- a0 % 10
+
+        # 0 to 9
+        addi t0, t0, 48
+
+        sb t0, (a1)
+        li t0, 10
+        divu a0, a0, t0
+
+        beq a1, t2, 0f
+        addi a1, a1, 1
+        j 0b
+    0:
+    mv t1, a1
+
+
+    1:
+        lb t0, (t1)
+        li t2, '0'
+        bne t0, t2, 1f
+        addi t1, t1, -1
+        j 1b
+
+    1:
+
+    bgez t3, 3f
+    li t0, '-'
+    addi t1, t1, 1
+    sb t0, (t1)
+
+    3:
+    li t0, '\n'
+    addi t1, t1, 1
+    sb t0, (t1)
+
+    return:
+    ret
+
+
+get_operator:
+    # a0: string pointer
+    # returns: address to next number (a0), operator char (a1)
+
+    0:
+        lb t0, (a0)
+        li t1, ' '
+        beq t1, t0, 0f
+        addi a0, a0, 1
+        j 0b
+
+    0:
+    addi a0, a0, 1
+    lb t0, (a0)
+    addi a0, a0, 2
+    mv a1, t0
+    ret
+
+
+treat_expression:
+    # Function to treat algebraic expression
+    # returns: result of expression (a0)
+
+    la a0, string
+    li a1, ' '
+    jal atoi
+    sw a0, 4(sp) # first number
+
+    la a0, string
+    jal get_operator
+    sb a1, 8(sp) # operator
+
+    li a1, '\n'
+    jal atoi
+
+    mv t1, a0
+    lw t2, 8(sp) # retrieve operator
+    lw t0, 4(sp) # retrieve first number
+
+    plus:
+        li t3, '+'
+        bne t2, t3, minus
+        add t0, t0, t1
+        j 0f
+
+    minus:
+        li t3, '-'
+        bne t2, t3, times
+        sub t0, t0, t1
+        j 0f
+
+    times:
+        li t3, '*'
+        bne t2, t3, division
+        mul t0, t0, t1
+        j 0f
+
+    division:
+        # check if t0 and t1 are positive, if not make them positive
+        bgez t0, 1f
+        li t2, -1
+        mul t0, t0, t2
+        1:
+        bgez t1, 2f
+        li t3, -1
+        mul t1, t1, t3
+        2:
+        divu t0, t0, t1
+
+        # check if the result is negative
+        bgez t2, 3f
+        mul t0, t0, t2
+        3:
+        bgez t3, 0f
+        mul t0, t0, t3
+
+    0:
+    mv a0, t0
+    ret
+
+
 peform_operation:
     # Function that has a switch case for the operations and calls the correct ones
-
     # a0: string pointer
+
     addi sp, sp, -16
     sw ra, (sp)
 
@@ -214,6 +364,9 @@ peform_operation:
 
     li t1, 3
     beq t0, t1, 3f
+
+    li t1, 4
+    beq t0, t1, 4f
 
     j end
 
@@ -241,6 +394,7 @@ peform_operation:
         jal mmio_read
 
         la a0, string
+        li a1, '\n'
         jal atoi
 
         la a1, string
@@ -255,10 +409,28 @@ peform_operation:
         jal mmio_write
         j end
 
+    4:
+        jal mmio_read
+
+        jal treat_expression
+
+        la a1, string
+        jal itoa_dec
+
+        la a0, string
+        la a1, aux_string
+        jal reverse_string
+
+        la a0, aux_string
+        li a1, 0xffff0100
+        jal mmio_write
+
+
     end:
     lw ra, (sp)
     addi sp, sp, 16
     ret
+
 
 .data
 string: .skip 0x32
