@@ -70,6 +70,8 @@ mmio_write:
 
 
 reverse_string:
+    # Function that will reserve a string and copy the reversed string to a destination pointer
+
     # a0: string pointer
     # a1: aux_string pointer
 
@@ -104,7 +106,99 @@ reverse_string:
     ret
 
 
+atoi:
+    # Function to turn a string into a decimal number
+
+    # a0: string pointer 
+    # returns: integer (a0)
+
+    li t0, 1 # for signal calculations
+    li t1, 0 # will store the number
+    0:
+        lbu t2, (a0)
+
+        # check new line char
+        li t3, '\n'
+        beq t3, t2, 0f
+
+        # check minus signal 
+        li t3, '-'
+        bne t2, t3, 1f
+        li t0, -1
+        j 2f
+
+        1:
+            addi t2, t2, -48 # t2 <- t2 - '0'
+            add t1, t1, t2
+            li t2, 10
+            mul t1, t1, t2
+
+        2:
+            addi a0, a0, 1
+            j 0b
+
+    0:
+    li t2, 10
+    divu t1, t1, t2
+    mul t1, t1, t0
+
+    mv a0, t1
+    ret
+
+
+itoa_hex:
+    # Function to turn an integer to its string hexdecimal representation 
+
+    # a0: integer number
+    # a1: string pointer that will store hex number
+
+    addi t2, a1, 7
+
+    0:
+        li t0, 16
+        remu t0, a0, t0 # t0 <- a0 % 16
+
+        li t1, 10
+        blt t0, t1, 1f
+
+        # A to F
+        sub t0, t0, t1
+        addi t0, t0, 'A'
+        j 2f
+
+        1:
+            # 0 to 9
+            addi t0, t0, 48
+
+        2:
+            sb t0, (a1)
+            li t0, 16
+            divu a0, a0, t0
+
+        beq a1, t2, 0f
+        addi a1, a1, 1
+        j 0b
+    0:
+
+    mv t1, a1
+    extra_zeros:
+        lb t0, (t1)
+        li t2, '0'
+        bne t0, t2, not_zero
+        addi t1, t1, -1
+        j extra_zeros
+
+    not_zero:
+        li t0, '\n'
+        addi t1, t1, 1
+        sb t0, (t1)
+
+    ret
+
+
 peform_operation:
+    # Function that has a switch case for the operations and calls the correct ones
+
     # a0: string pointer
     addi sp, sp, -16
     sw ra, (sp)
@@ -146,7 +240,19 @@ peform_operation:
     3:  
         jal mmio_read
 
-        
+        la a0, string
+        jal atoi
+
+        la a1, string
+        jal itoa_hex
+
+        la a0, string
+        la a1, aux_string
+        jal reverse_string
+
+        la a0, aux_string
+        li a1, 0xffff0100
+        jal mmio_write
         j end
 
     end:
@@ -155,5 +261,5 @@ peform_operation:
     ret
 
 .data
-string: .skip 0x64
-aux_string: .skip 0x64
+string: .skip 0x32
+aux_string: .skip 0x32
