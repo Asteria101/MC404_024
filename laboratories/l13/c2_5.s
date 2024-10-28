@@ -19,9 +19,10 @@ node->d 6(a0)
 .globl node_creation
 
 node_creation:
-    addi sp, sp, -12
-    sw fp, 8(sp)
-    mv fp, sp
+    addi sp, sp, -32
+    sw ra, 4(sp)
+    sw fp, (sp)
+    addi fp, sp, 8
 
     li t0, -12
     sh t0, 6(fp) # node.d
@@ -35,8 +36,9 @@ node_creation:
     mv a0, fp
     jal mystery_function
 
-    lw fp, 8(sp)
-    addi sp, sp, 12
+    lw fp, (sp)
+    lw ra, 4(sp)
+    addi sp, sp, 32
     ret
 
 /*
