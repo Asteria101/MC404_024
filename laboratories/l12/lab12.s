@@ -274,8 +274,8 @@ get_operator:
         li t1, ' '
         beq t1, t0, 0f
         addi a0, a0, 1
-        j 0b
 
+        j 0b
     0:
     addi a0, a0, 1
     lb t0, (a0)
@@ -411,7 +411,7 @@ peform_operation:
 
     4:
         jal mmio_read
-
+        
         jal treat_expression
 
         la a1, string
@@ -424,7 +424,6 @@ peform_operation:
         la a0, aux_string
         li a1, 0xffff0100
         jal mmio_write
-
 
     end:
     lw ra, (sp)
