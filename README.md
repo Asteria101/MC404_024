@@ -23,7 +23,7 @@ Bellow you will find the laboratories resolutions and their topic. As well as th
 - [x] [Lab 2](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l02) &rarr; Debugging in Assembly Language **5.65/10** 
     - [2.3](https://riscv-programming.org/ale-exercise-book/book/ch02-03-debugging-a-program.html)
 
-- [x] [Lab 3](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l03) (code didn't work, fix later) &rarr; Number base conversion in C **0/10**
+- [x] [Lab 3](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l03) (Fix 🐛) &rarr; Number base conversion in C **0/10**
     - [3.1](https://riscv-programming.org/ale-exercise-book/book/ch03-01-base-conversion-c.html#number-base-conversion-in-c)
 
 - [x] [Lab 5a](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l05a) &rarr; Bit masking and shift operations **10/10**
@@ -59,8 +59,14 @@ Bellow you will find the laboratories resolutions and their topic. As well as th
 - [x] [Lab 11](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l11) &rarr; Car **10/10**
     - [7.1](https://riscv-programming.org/ale-exercise-book/book/ch07-01-peripheral-controlling-the-car.html)
 
-- [x] [Lab 12](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l12) &rarr; Serial Port
+- [x] [Lab 12](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l12) (Fix 🐛) &rarr; Serial Port **6/10**
     - [7.2](https://riscv-programming.org/ale-exercise-book/book/ch07-02-peripheral-using-serial-port.html)
 
-- [x] [Lab 13](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l13) &rarr; ABI compliance and Data Organization on Memory: Mini Labs
+- [x] [Lab 13](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l13) &rarr; ABI compliance and Data Organization on Memory: Mini Labs **10/10**
     - [8.1](https://riscv-programming.org/ale-exercise-book/book/ch08-01-ABI.html) and [8.2](https://riscv-programming.org/ale-exercise-book/book/ch08-02-data-organization.html)
+
+- [x] [Lab 14](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l14) &rarr; External Interrupts: Music box
+    - [7.3](https://riscv-programming.org/ale-exercise-book/book/ch07-03-interrupts-midi-player.html)
+
+- [x] [Lab 15](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l15) &rarr; Software Interrupts: Controlling car
+    - [7.4](https://riscv-programming.org/ale-exercise-book/book/ch07-04-interrupts-controlling-the-car.html)
