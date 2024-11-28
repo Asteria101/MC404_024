@@ -23,7 +23,7 @@ Bellow you will find the laboratories resolutions and their topic. As well as th
 - [x] [Lab 2](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l02) &rarr; Debugging in Assembly Language **5.65/10** 
     - [2.3](https://riscv-programming.org/ale-exercise-book/book/ch02-03-debugging-a-program.html)
 
-- [x] [Lab 3](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l03) (Fix 🐛) &rarr; Number base conversion in C **0/10**
+- [x] [Lab 3](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l03) (Fix 🐛) &rarr; Number base conversion in C **10/10**
     - [3.1](https://riscv-programming.org/ale-exercise-book/book/ch03-01-base-conversion-c.html#number-base-conversion-in-c)
 
 - [x] [Lab 5a](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l05a) &rarr; Bit masking and shift operations **10/10**
