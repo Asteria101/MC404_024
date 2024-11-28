@@ -1,6 +1,7 @@
-.text
-.globl _start
 
+.text
+
+.globl _start
 _start:
     la a0, string
     li a1, 0xffff0100
@@ -40,7 +41,6 @@ mmio_read:
         j 0b
     0:
     ret
-
 
 mmio_write:
     # a0: string pointer
@@ -287,6 +287,8 @@ get_operator:
 treat_expression:
     # Function to treat algebraic expression
     # returns: result of expression (a0)
+    addi sp, sp, -16
+    sw ra, (sp)
 
     la a0, string
     li a1, ' '
@@ -343,6 +345,9 @@ treat_expression:
 
     0:
     mv a0, t0
+
+    lw ra, (sp) # restore ra
+    addi sp, sp, 16
     ret
 
 
@@ -356,15 +361,19 @@ peform_operation:
     lb t0, (a0) # load operation character
     addi t0, t0, -48
 
+    # Operation 1: read and write back
     li t1, 1
     beq t0, t1, 1f
 
+    # Operation 2: reverse string
     li t1, 2
     beq t0, t1, 2f
 
+    # Operation 3: read, convert decimal to hex and write back
     li t1, 3
     beq t0, t1, 3f
 
+    # Operation 4: treat expression
     li t1, 4
     beq t0, t1, 4f
 
