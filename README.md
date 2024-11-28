@@ -59,7 +59,7 @@ Bellow you will find the laboratories resolutions and their topic. As well as th
 - [x] [Lab 11](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l11) &rarr; Car **10/10**
     - [7.1](https://riscv-programming.org/ale-exercise-book/book/ch07-01-peripheral-controlling-the-car.html)
 
-- [x] [Lab 12](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l12) (Fix 🐛) &rarr; Serial Port **6/10**
+- [x] [Lab 12](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l12) (Fix 🐛) &rarr; Serial Port **10/10**
     - [7.2](https://riscv-programming.org/ale-exercise-book/book/ch07-02-peripheral-using-serial-port.html)
 
 - [x] [Lab 13](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l13) &rarr; ABI compliance and Data Organization on Memory: Mini Labs **10/10**
