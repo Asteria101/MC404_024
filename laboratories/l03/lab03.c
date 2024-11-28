@@ -30,285 +30,6 @@ void write(int __fd, const void *__buf, int __n) {
 }
 
 
-
-/* Defines for read() and write()*/
-
-#define STDIN_FD  0
-#define STDOUT_FD 1
-
-
-/*----------------- Basic functions -----------------*/
-
-/*
-* Function to calculate the power of a number
-*/
-double power(int base, int exp) {
-    double result = 1;
-
-    if (exp == 0) {
-        return 1;
-    }
-
-    for (int i = 0; i < exp; i++) {
-        result *= base;
-    }
-
-    return result;
-}
-
-
-/*
-* Functon to calculate the length of a string
-*/
-int strLen(char str[]) {
-    int i;
-    for (i = 0; str[i] != '\n'; i++);
-    return i + 1;
-}
-
-
-/*
-* Function to detect the base of the input number based on the initial characters
-*/
-int detectBase(char inputStr[]) {
-    return (inputStr[1] == 'x') ? 16 : 10;
-}
-
-
-/*
-* Function that inverts the elements of a string
-*/
-void invertStr(char inputStr[], int numElems) {
-    for (int i = 0; i < numElems / 2; i++) {
-        char tmp = inputStr[i];
-        inputStr[i] = inputStr[numElems - i - 1];
-        inputStr[numElems - i - 1] = tmp;
-    }
-}
-
-
-/*
-* Function to convert a string to an integer
-*/
-unsigned atoi(char input[], int strLength, int base, int sign) {
-    int pos, temp, y = 0;
-    unsigned int integer = 0;
-
-    // defines where to stop the conversion considering the prefixes and signals
-    switch (input[0]) {
-        case '-':
-            pos = 1;
-            break;
-        
-        case '0':
-            pos = 2;
-            break;
-
-        default:
-            pos = 0;
-            break;
-    }
-
-    // converts the string to an integer
-    for (int i = strLength - 2; i >= pos; i--) {
-        if (input[i] >= '0' && input[i] <= '9') 
-            temp = input[i] - '0';
-
-        else  
-            temp = input[i] - 'a' + 10;
-
-        integer = integer + temp * power(base, y);
-        y++;
-    }
-
-    return integer;
-}
-
-
-/*
-* Function to convert integer to string
-*/
-void itoa(char str[], unsigned int num, int sign) {
-    char *ptr = str, *ptr1 = str, tmp_char;
-    int tmp_value;
-
-    do {
-        tmp_value = num;
-        num /= 10;
-        *ptr++ = "ZYXWVUTSRQPONMLKJIHGFEDCBA9876543210123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ" [35 + (tmp_value - num * 10)];
-    } while (num);
-
-    if (sign == 1) {
-        *ptr++ = '-';
-    }
-    *ptr-- = '\n';
-
-    while (ptr1 < ptr) {
-        tmp_char = *ptr;
-        *ptr-- = *ptr1;
-        *ptr1++ = tmp_char;
-    }
-}
-
-
-
-/*----------------- Conversion functions -----------------*/
-
-/*
-* Function to convert an integer to binary and returns the number of digits
-*/
-int intToBin(unsigned int num, char bin[]) {
-    int x = 0;
-    do {
-        bin[x] = num % 2 + '0';
-        num /= 2;
-        x++;
-    } while (num != 0);
-
-    return x;
-}
-
-
-/*
-* Function that prints the binary representation of a number as a string
-*/
-void numToBin(int num, int sign, char bin[]) {
-    if (sign == 1) {
-        int x = intToBin(num * -1, bin);
-        invertStr(bin, 32);
-        bin[32] = '\n';
-        write(STDOUT_FD, bin, 33);
-    }
-
-    else {
-        int x = intToBin(num, bin);
-        invertStr(bin, x);
-        bin[x] = '\n';
-        write(STDOUT_FD, bin, x + 1);
-    }
-}
-
-
-/*
-* Function that prints an integer as a decimal string
-*/
-void numToDec(int num, int sign, char dec[]) {
-    itoa(dec, num, sign);
-    int len = strLen(dec);
-    dec[len - 1] = '\n';
-    write(STDOUT_FD, dec, len);
-}
-
-
-/*
-* Function that prints the hexadecimal representation of a binary number
-*/
-/*void binToHex(char bin[], char hex[]) {
-    int i, j, k, sum;
-
-    int bin_len = strLen(bin) - 1;
-
-    char aux[3];
-    itoa(aux, bin_len, 0);
-    aux[2] = '\n';
-    write(STDOUT_FD, aux, 3);
-
-    int length_hex, remainder;
-
-
-    if (bin_len % 4 == 0) {
-        length_hex = bin_len / 4;
-        remainder = 0;
-    }
-    else {
-        length_hex = (bin_len / 4) + 1;
-
-        invertStr(bin, bin_len);
-        remainder = 4 - (bin_len % 4);
-
-        for (i = 0; i < remainder; i++) {
-            bin[bin_len + i] = '0';
-        }
-        invertStr(bin, bin_len + remainder);
-    }
-
-    for (
-            i = 0, j = bin_len + remainder - 1; 
-            i < length_hex && j >= 0;
-            i++, j -= 4
-        ) {
-
-        sum = 0;
-        for (k = 0; k < 4; k++) {
-            sum += (bin[j - k] - '0') * power(2, k);
-        }
-
-        if (sum < 10) {
-            hex[i] = sum + '0';
-        }
-
-        else {
-            hex[i] = sum + 'a' - 10;
-        }
-    }
-
-    invertStr(hex, length_hex);
-    hex[length_hex] = '\n';
-    write(STDOUT_FD, hex, length_hex + 1);
-}*/
-
-void hex_code(int val, char hex[]){
-    unsigned int uval = (unsigned int) val, aux;
-    hex[10] = '\n';
-
-    for (int i = 9; i > 1; i--){
-        aux = uval % 16;
-        if (aux >= 10)
-            hex[i] = aux - 10 + 'A';
-        else
-            hex[i] = aux + '0';
-        uval = uval / 16;
-    }
-    write(STDOUT_FD, hex, 11);
-}
-
-
-
-int main() {
-    // Read the input string
-    char str[20];
-    int n = read(STDIN_FD, str, 20);
-
-    // Detect the sign of a decimal input
-    int sign = 0;
-    if (str[0] == '-') {
-        sign = 1;
-    }
-    int base = detectBase(str);
-
-    // converts string into integer
-    int num = atoi(str, n, base, sign);
-    if (num < 0) sign = 1;
-
-    /*char aux[20];
-    itoa(aux, num, sign);
-    int len = strLen(aux);
-    aux[len] = '\n';
-    write(STDOUT_FD, aux, len + 1);*/
-
-    char bin_prefix[2] = {'0', 'b'};
-    char hex_prefix[2] = {'0', 'x'};
-
-    char bin[33], dec[11], hex[9];
-
-    numToBin(num, sign, bin); // correct
-    numToDec(num, sign, dec); // correct
-    binToHex(bin, hex);
-
-    return 0;
-}
-
-
 void exit(int code) {
     __asm__ __volatile__(
         "mv a0, %0           # return code\n"
@@ -319,6 +40,155 @@ void exit(int code) {
         : "a0", "a7"
     );
 }
+
+
+/* Defines for read() and write()*/
+#define STDIN_FD  0
+#define STDOUT_FD 1
+
+
+/*----------------- Basic functions -----------------*/
+
+/**
+ * Function to check if a number is negative using bit masking
+ */
+int isNegative(int num) {
+    return (num & (1 << (sizeof(int) * 8 - 1))) != 0;
+}
+
+
+/**
+ * Function to convert a string to an integer
+ */
+int atoi(char str[], int length) {
+    int integer = 0, sign = 1;
+
+    int base = (str[1] == 'x') ? 16 : 10;
+
+    int i = 0;
+    if (base == 16) i = 2;
+    else {
+        if (str[0] == '-') { sign = -1; i = 1; }
+    }
+
+    for (; str[i] != '\n'; i++) {
+            integer = (str[i] >= '0' && str[i] <= '9') ? integer * base + (str[i] - '0') : integer * base + (str[i] - 'a' + 10);
+    }
+
+    return sign * integer; 
+}
+
+
+/**
+ * Function to convert integer to string
+ */
+void itoa(char str[], int num, int base, int is_negative) {
+    unsigned int tmp = (unsigned int)num;
+    int i = 0;
+
+    if (is_negative && base == 10)
+        tmp = (unsigned int)(-num);
+
+    do {
+        int rem = tmp % base;
+        str[i++] = (rem > 9) ? rem + 'a' - 10 : rem + '0';
+    } while ((tmp /= base) > 0);
+
+    if (is_negative && base == 10)
+        str[i++] = '-';
+
+    str[i] = '\n';
+
+    for (int x = 0; x < i / 2; x++) {
+        char tmp = str[x];
+        str[x] = str[i - x - 1];
+        str[i - x - 1] = tmp;
+    }
+
+    write(STDOUT_FD, str, i+1);
+}
+
+
+/*----------------- Conversion functions -----------------*/
+
+/**
+ * Function to convert an integer to binary and prints the binary representation
+ */
+void intToBin(int num) {
+    char preffix[2] = {'0', 'b'};
+    write(STDOUT_FD, preffix, 2);
+
+    char bin[33];
+
+    int start = 0;
+    int leading_zero = 1;
+    for (int i = 31; i >= 0; i--) {
+        char bit = ((num >> i) & 1) ? '1' : '0';
+        if (bit == '1') {
+            leading_zero = 0;
+        }
+        if (!leading_zero) {
+            bin[start++] = bit;
+        }
+    }
+    if (start == 2) {
+        bin[start++] = '0';
+    }
+    bin[start] = '\n';
+
+    write(STDOUT_FD, bin, start+1);
+}
+
+
+/**
+ * Function to convert an integer to decimal and prints the decimal representation
+ */
+void intToDecimal(int num) {
+    char dec[15];
+    itoa(dec, num, 10, isNegative(num));
+}
+
+
+/**
+ * Function to convert an integer to hexadecimal and prints the hexadecimal representation
+ */
+void intToHex(int num) {
+    char preffix[2] = {'0', 'x'};
+    write(STDOUT_FD, preffix, 2);
+    char hex[12];
+    itoa(hex, num, 16, isNegative(num));
+}
+
+
+/**
+ * Function to convert an integer to little endian and prints the little endian representation
+ */
+void endianSwapp(int num) {
+    // do the endian swap
+    unsigned int tmp = (unsigned int)num;
+    tmp = ((tmp >> 24) & 0xff) | ((tmp << 8) & 0xff0000) | ((tmp >> 8) & 0xff00) | ((tmp << 24) & 0xff000000);
+
+    char endian[15];
+    itoa(endian, tmp, 10, 0);
+}
+
+
+int main() {
+    // Read the input string
+    char str[20];
+    int n = read(STDIN_FD, str, 20);
+
+    // converts string into integer
+    int num = atoi(str, n);
+
+    intToBin(num);
+    intToDecimal(num);
+    intToHex(num);
+    endianSwapp(num);
+
+    return 0;
+}
+
 
 void _start() {
     int ret_code = main();
