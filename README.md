@@ -65,8 +65,8 @@ Bellow you will find the laboratories resolutions and their topic. As well as th
 - [x] [Lab 13](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l13) &rarr; ABI compliance and Data Organization on Memory: Mini Labs **10/10**
     - [8.1](https://riscv-programming.org/ale-exercise-book/book/ch08-01-ABI.html) and [8.2](https://riscv-programming.org/ale-exercise-book/book/ch08-02-data-organization.html)
 
-- [x] [Lab 14](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l14) &rarr; External Interrupts: Music box
+- [x] [Lab 14](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l14) &rarr; External Interrupts: Music box **10/10**
     - [7.3](https://riscv-programming.org/ale-exercise-book/book/ch07-03-interrupts-midi-player.html)
 
-- [x] [Lab 15](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l15) &rarr; Software Interrupts: Controlling car
+- [x] [Lab 15](https://github.com/Asteria101/MC404_024/tree/main/laboratories/l15) &rarr; Software Interrupts: Controlling car **10/10**
     - [7.4](https://riscv-programming.org/ale-exercise-book/book/ch07-04-interrupts-controlling-the-car.html)
